@@ -1,4 +1,4 @@
-from settings import GUI_SCALE
+from settings import GUI_SCALE, NEUTRON_SOURCE_ENERGY
 
 import numpy as np
 from neutron import Neutron
@@ -21,7 +21,7 @@ class NeutronSource:
 
     def emit(self, neutrons):
         theta = np.random.random() * 2 * np.pi
-        neutrons.append(Neutron(self.x_pos, self.y_pos, 0.0273, theta))
+        neutrons.append(Neutron(self.x_pos, self.y_pos, NEUTRON_SOURCE_ENERGY, theta))
 
     def draw(self, canvas):
         size = 10

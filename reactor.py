@@ -2,8 +2,10 @@ import tkinter as tk
 
 from cell import Cell
 from neutronsource import NeutronSource
+from neutron import Neutron
 
 from settings import *
+import numpy as np
 
 
 class Reactor:
@@ -19,11 +21,18 @@ class Reactor:
         self.neutrons = []
         self.neutron_count = len(self.neutrons)
         self.neutron_count_text = tk.Label(
-            parent, text="Neutron count:" + str(self.neutron_count)
+            parent, text="Neutron count: " + str(self.neutron_count)
         )
         self.neutron_count_text.pack()
+        self.average_neutron_energy = self.calculate_average_energy()
+        self.average_neutron_energy_text = tk.Label(
+            parent, text="Neutron count: " + str(self.average_neutron_energy)
+        )
+        self.average_neutron_energy_text.pack()
         # Position of source in cm
-        self.neutron_source = NeutronSource(2, 2, 1, 0.1)
+        self.neutron_source = NeutronSource(
+            0.2 * N_X * CELL_SIZE, 0.2 * N_Y * CELL_SIZE, 1, 0.1
+        )
         self.is_running = False
         run_button = tk.Button(parent, text="Run", command=self.run_reactor)
         run_button.pack()
@@ -52,21 +61,49 @@ class Reactor:
         self.parent.update()
 
     def step_reactor(self):
-        for i in range(len(self.neutrons) - 1, -1, -1):
-            neutron = self.neutrons[i]
-            neutron.step(self.cells)
-            if neutron.collision:
-                """if np.random.random() < 0.25:
-                    self.neutrons.pop(i)"""
-                pass
+        self.step_neutrons()
         self.neutron_source.decide_emit(self.neutrons)
         self.neutron_count = len(self.neutrons)
         self.neutron_count_text.config(text="Neutron count: " + str(self.neutron_count))
+        self.average_neutron_energy = self.calculate_average_energy()
+        self.average_neutron_energy_text.config(
+            text="Neutron energy: " + str(self.average_neutron_energy)
+        )
+
+    def step_neutrons(self):
+        # Steps all neutrons forward. Tracks which neutrons undergo fission and absorption, handles the adding of new prompt neutrons and removal of the fissioned and absorbed neutrons
+        fissions = []
+        # Track neutrons that fission or are absorbed
+        neutrons_to_remove = []
+        for i in range(len(self.neutrons) - 1, -1, -1):
+            neutron = self.neutrons[i]
+            neutron.step(self.cells)
+            if neutron.fission:
+                x_loc = neutron.x_pos
+                y_loc = neutron.y_pos
+                fissions.append([x_loc, y_loc])
+                neutrons_to_remove.append(i)
+            if neutron.absorb:
+                neutrons_to_remove.append(i)
+        for fission in fissions:
+            if (NEUTRONS_PER_FISSION % 1) > np.random.random():
+                neutrons_to_add = np.ceil(NEUTRONS_PER_FISSION)
+            else:
+                neutrons_to_add = np.floor(NEUTRONS_PER_FISSION)
+            for i in range(int(neutrons_to_add)):
+                self.neutrons.append(
+                    Neutron(
+                        x_pos=fission[0],
+                        y_pos=fission[1],
+                        energy=10,
+                        theta=np.random.random() * 2 * np.pi,
+                    )
+                )
+        for i in reversed(neutrons_to_remove):
+            self.neutrons.pop(i)
 
     def update_reactor(self):
         # Function to step all reactor elements, then draw the updated elements onto the canvas
-        self.step_reactor()
-        self.draw_reactor()
         while self.is_running:
             self.step_reactor()
             self.draw_reactor()
@@ -93,6 +130,15 @@ class Reactor:
     def emit_neutron(self):
         self.neutron_source.emit(self.neutrons)
 
+    def calculate_average_energy(self):
+        total_energy = 0
+        for neutron in self.neutrons:
+            total_energy += neutron.energy
+        if len(self.neutrons) != 0:
+            return total_energy / len(self.neutrons)
+        else:
+            return 0
+
 
 def generate_cells(N_X, N_Y, CELL_SIZE):
     # generate instances of the cell class
@@ -109,7 +155,7 @@ def generate_cells(N_X, N_Y, CELL_SIZE):
             if i > 2 and j > 2 and i < 7 and j < 7:
                 cell_type = "Fuel"
             else:
-                cell_type = "Air"
+                cell_type = "Moderator"
             cells.append(Cell(nodes, cell_type))
     return cells
 

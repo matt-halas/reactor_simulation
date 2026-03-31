@@ -11,7 +11,7 @@ class Cell:
         self.cell_type = cell_type
         if cell_type == "Fuel":
             self.color = "yellow"
-        elif cell_type == "Air":
+        elif cell_type == "Moderator":
             self.color = "blue"
 
     def draw(self, canvas):
