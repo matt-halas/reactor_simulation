@@ -44,26 +44,40 @@ class Neutron:
         step_path_length = np.sqrt((self.x_vel**2 + self.y_vel**2)) * 100 * TIME_STEP
         if self.medium == "Moderator":
             # Probability formula on page 59 - neutron makes it to x WITHOUT a collision
-            collision_probability = 1 - np.exp(-CROSS_SECTION * step_path_length)
-            if collision_probability > np.random.random():
+            scatter_probability = 1 - np.exp(-MOD_MAC_SCT_CS * step_path_length)
+            if scatter_probability > np.random.random():
                 self.moderator_collision()
+            absorb_probability = 1 - np.exp(
+                -MOD_MAC_ABS_CS * 0.0253 / self.energy * step_path_length
+            )
+            if absorb_probability > np.random.random():
+                self.absorb = True
+                print("absorbed by moderator")
+
         elif self.medium == "Fuel":
-            cross_section = CROSS_SECTION * np.sqrt(0.0253 / self.energy)
+            cross_section = FUEL_MAC_ABS_CS * np.sqrt(0.0253 / self.energy)
             collision_probability = 1 - np.exp(-cross_section * step_path_length)
             if collision_probability > np.random.random():
                 self.fuel_collision()
 
     def moderator_collision(self):
         # phi is collision angle
-        phi = (np.random.random() - 0.5) * np.pi
+        phi = np.random.random() * 2 * np.pi
         theta = np.atan2(self.y_vel, self.x_vel)
+        theta2 = np.random.random() * 2 * np.pi
         vel = np.sqrt(self.x_vel**2 + self.y_vel**2)
-        self.x_vel = vel * np.cos(theta - phi) * (1 - M_MOD) * np.cos(phi) / (
-            1 + M_MOD
-        ) + vel * np.sin(theta - phi) * np.cos(phi + np.pi / 2)
-        self.y_vel = vel * np.cos(theta - phi) * (1 - M_MOD) * np.sin(phi) / (
-            1 + M_MOD
-        ) + vel * np.sin(theta - phi) * np.sin(phi + np.pi / 2)
+        self.x_vel = (
+            vel * np.cos(theta - phi) * (1 - M_MOD)
+            + 2 * M_MOD * MODERATOR_RMS * np.cos(theta2 - phi)
+        ) * np.cos(phi) / (1 + M_MOD) + vel * np.sin(theta - phi) * np.cos(
+            phi + np.pi / 2
+        )
+        self.y_vel = (
+            vel * np.cos(theta - phi) * (1 - M_MOD)
+            + 2 * M_MOD * MODERATOR_RMS * np.cos(theta2 - phi)
+        ) * np.sin(phi) / (1 + M_MOD) + vel * np.sin(theta - phi) * np.sin(
+            phi + np.pi / 2
+        )
 
     def fuel_collision(self):
         if not self.fission and not self.absorb:

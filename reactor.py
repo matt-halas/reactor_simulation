@@ -1,11 +1,11 @@
 import tkinter as tk
+import numpy as np
 
 from cell import Cell
 from neutronsource import NeutronSource
 from neutron import Neutron
 
 from settings import *
-import numpy as np
 
 
 class Reactor:
@@ -16,7 +16,7 @@ class Reactor:
             width=N_X * CELL_SIZE * GUI_SCALE,
             height=N_Y * CELL_SIZE * GUI_SCALE,
         )
-        self.canvas.pack()
+        self.canvas.grid(row=0, column=0)
         self.cells = generate_cells(N_X, N_Y, CELL_SIZE)
         self.neutrons = []
         self.neutron_count = len(self.neutrons)
@@ -29,6 +29,10 @@ class Reactor:
             parent, text="Neutron count: " + str(self.average_neutron_energy)
         )
         self.average_neutron_energy_text.pack()
+        self.time_elapsed = 0
+        self.time_elapsed_text = tk.Label(
+            parent, text="Time elapsed: " + str(self.time_elapsed)
+        )
         # Position of source in cm
         self.neutron_source = NeutronSource(
             0.2 * N_X * CELL_SIZE, 0.2 * N_Y * CELL_SIZE, 1, 0.1
@@ -69,6 +73,10 @@ class Reactor:
         self.average_neutron_energy_text.config(
             text="Neutron energy: " + str(self.average_neutron_energy)
         )
+        self.time_elapsed += TIME_STEP
+        self.time_elapsed_text.config = tk.Label(
+            text="Time elapsed: " + str(self.time_elapsed)
+        )
 
     def step_neutrons(self):
         # Steps all neutrons forward. Tracks which neutrons undergo fission and absorption, handles the adding of new prompt neutrons and removal of the fissioned and absorbed neutrons
@@ -82,8 +90,7 @@ class Reactor:
                 x_loc = neutron.x_pos
                 y_loc = neutron.y_pos
                 fissions.append([x_loc, y_loc])
-                neutrons_to_remove.append(i)
-            if neutron.absorb:
+            if neutron.absorb or neutron.fission:
                 neutrons_to_remove.append(i)
         for fission in fissions:
             if (NEUTRONS_PER_FISSION % 1) > np.random.random():

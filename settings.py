@@ -9,8 +9,15 @@ GUI_SCALE = 30000
 CROSS_SECTION_AMP = 1
 
 # Cross section data taken from https://wwwndc.jaea.go.jp/j5fig/findex.html
+
+### Moderator constants ###
 # Moderator macroscopic cross section in cm^-1
 CROSS_SECTION = CROSS_SECTION_AMP * 0.1
+MOD_MAC_SCT_CS = 3.443
+MOD_MAC_ABS_CS = 0.0222
+
+# RMS of hydrogen atoms in water. Will transfer some energy to neutrons.
+MODERATOR_RMS = 2000
 
 # Energy of new neutrons created by the source
 NEUTRON_SOURCE_ENERGY = 10
@@ -38,4 +45,6 @@ FUEL_ALPHA = (U235_ALPHA * U235_MAC_ABS_CS) / (U235_MAC_ABS_CS + U238_MAC_ABS_CS
 # Mass of moderator atoms
 M_MOD = 1
 # Time step length
-TIME_STEP = 1e-7
+TIME_STEP = 1e-8
+
+print(FUEL_MAC_ABS_CS)
