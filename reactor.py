@@ -1,4 +1,6 @@
 import tkinter as tk
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
 from cell import Cell
@@ -9,51 +11,75 @@ from settings import *
 
 
 class Reactor:
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, root):
+        self.root = root
         self.canvas = tk.Canvas(
-            parent,
+            root,
             width=N_X * CELL_SIZE * GUI_SCALE,
             height=N_Y * CELL_SIZE * GUI_SCALE,
         )
-        self.canvas.grid(row=0, column=0)
+        self.canvas.pack()
         self.cells = generate_cells(N_X, N_Y, CELL_SIZE)
         self.neutrons = []
         self.neutron_count = len(self.neutrons)
         self.neutron_count_text = tk.Label(
-            parent, text="Neutron count: " + str(self.neutron_count)
+            root, text="Neutron count: " + str(self.neutron_count)
         )
         self.neutron_count_text.pack()
         self.average_neutron_energy = self.calculate_average_energy()
         self.average_neutron_energy_text = tk.Label(
-            parent, text="Neutron count: " + str(self.average_neutron_energy)
+            root, text="Neutron count: " + str(self.average_neutron_energy)
         )
         self.average_neutron_energy_text.pack()
         self.time_elapsed = 0
         self.time_elapsed_text = tk.Label(
-            parent, text="Time elapsed: " + str(self.time_elapsed)
+            root, text="Time elapsed: " + str(self.time_elapsed)
         )
         # Position of source in cm
         self.neutron_source = NeutronSource(
             0.2 * N_X * CELL_SIZE, 0.2 * N_Y * CELL_SIZE, 1, 0.1
         )
         self.is_running = False
-        run_button = tk.Button(parent, text="Run", command=self.run_reactor)
+        run_button = tk.Button(root, text="Run", command=self.run_reactor)
         run_button.pack()
-        pause_button = tk.Button(parent, text="Pause", command=self.pause_reactor)
+        pause_button = tk.Button(root, text="Pause", command=self.pause_reactor)
         pause_button.pack()
-        reset_button = tk.Button(parent, text="Reset", command=self.reset_reactor)
+        reset_button = tk.Button(root, text="Reset", command=self.reset_reactor)
         reset_button.pack()
         toggle_source_button = tk.Button(
-            parent, text="Toggle neutron source", command=self.toggle_source
+            root, text="Toggle neutron source", command=self.toggle_source
         )
         toggle_source_button.pack()
         emit_neutron_button = tk.Button(
-            parent, text="Emit neutron", command=self.emit_neutron
+            root, text="Emit neutron", command=self.emit_neutron
         )
         emit_neutron_button.pack()
+
+        self.plot_frame = tk.Frame(root)
+        self.plot_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.fig = Figure(figsize=(5, 3), dpi=100)
+        self.ax = self.fig.add_subplot(111)
+
+        self.figcanvas = FigureCanvasTkAgg(self.fig, master=self.plot_frame)
+        self.figcanvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        self.x_data, self.y_data = [], []
+        self.update_plot()  # Start live updates
+
         self.draw_reactor()
         self.update_reactor()
+
+    def update_plot(self):
+
+        self.x_data.append(self.time_elapsed)
+        self.y_data.append(self.neutron_count)
+
+        self.ax.clear()
+        self.ax.plot(self.x_data, self.y_data, color="steelblue")
+        self.figcanvas.draw_idle()
+
+        self.root.after(100, self.update_plot)  # Runs alongside your existing loop
 
     def draw_reactor(self):
         self.canvas.delete("all")
@@ -62,7 +88,7 @@ class Reactor:
         for neutron in self.neutrons:
             neutron.draw(self.canvas)
         self.neutron_source.draw(self.canvas)
-        self.parent.update()
+        self.root.update()
 
     def step_reactor(self):
         self.step_neutrons()
