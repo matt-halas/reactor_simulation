@@ -31,4 +31,5 @@ class NeutronSource:
             self.x_pos * GUI_SCALE + size / 2,
             self.y_pos * GUI_SCALE + size / 2,
             fill="red",
+            tags="source",
         )

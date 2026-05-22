@@ -20,20 +20,20 @@ class Neutron:
         self.fission = False
         self.absorb = False
 
-    def step(self, cells):
+    def step(self, cells, time_step, fuel_cs, fuel_alpha, reactor_size):
         self.energy = 1 / 2 * 1.66e-27 * (self.x_vel**2 + self.y_vel**2) / 1.6e-19
-        dx = self.x_vel * TIME_STEP
-        dy = self.y_vel * TIME_STEP
-        if dx > N_X * CELL_SIZE or dy > N_Y * CELL_SIZE:
+        dx = self.x_vel * time_step
+        dy = self.y_vel * time_step
+        if dx > reactor_size or dy > reactor_size:
             print("too fast!")
         # Wall collisions changed to periodicity instead of a reflection
-        if self.x_pos + dx > N_X * CELL_SIZE or self.x_pos + dx < 0:
-            self.x_pos = (self.x_pos + dx) % (N_X * CELL_SIZE)
+        if self.x_pos + dx > reactor_size or self.x_pos + dx < 0:
+            self.x_pos = (self.x_pos + dx) % (reactor_size)
         else:
             self.x_pos += dx
 
-        if self.y_pos + dy > N_Y * CELL_SIZE or self.y_pos + dy < 0:
-            self.y_pos = (self.y_pos + dy) % (N_Y * CELL_SIZE)
+        if self.y_pos + dy > reactor_size or self.y_pos + dy < 0:
+            self.y_pos = (self.y_pos + dy) % (reactor_size)
         else:
             self.y_pos += dy
 
@@ -41,7 +41,7 @@ class Neutron:
         self.find_medium(cells)
         # If the medium is moderator, determine the likelihood of a collision in a path that the neutron is travelling
         # Determine the step path length in cm (m/s*100*dt)
-        step_path_length = np.sqrt((self.x_vel**2 + self.y_vel**2)) * 100 * TIME_STEP
+        step_path_length = np.sqrt((self.x_vel**2 + self.y_vel**2)) * 100 * time_step
         if self.medium == "Moderator":
             # Probability formula on page 59 - neutron makes it to x WITHOUT a collision
             scatter_probability = 1 - np.exp(-MOD_MAC_SCT_CS * step_path_length)
@@ -52,13 +52,12 @@ class Neutron:
             )
             if absorb_probability > np.random.random():
                 self.absorb = True
-                print("absorbed by moderator")
 
         elif self.medium == "Fuel":
-            cross_section = FUEL_MAC_ABS_CS * np.sqrt(0.0253 / self.energy)
+            cross_section = fuel_cs * np.sqrt(0.0253 / self.energy)
             collision_probability = 1 - np.exp(-cross_section * step_path_length)
             if collision_probability > np.random.random():
-                self.fuel_collision()
+                self.fuel_collision(fuel_alpha)
 
     def moderator_collision(self):
         # phi is collision angle
@@ -79,9 +78,9 @@ class Neutron:
             phi + np.pi / 2
         )
 
-    def fuel_collision(self):
+    def fuel_collision(self, fuel_alpha):
         if not self.fission and not self.absorb:
-            fission = np.random.random() < FUEL_ALPHA
+            fission = np.random.random() < fuel_alpha
             if fission:
                 self.fission = True
             else:
@@ -98,4 +97,5 @@ class Neutron:
             self.x_pos * GUI_SCALE + self.size / 2,
             self.y_pos * GUI_SCALE + self.size / 2,
             fill=self.color,
+            tags="neutron",
         )
