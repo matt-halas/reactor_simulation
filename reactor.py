@@ -6,6 +6,11 @@ from functions import (
     calculate_average_energy,
     calculate_fuel_params,
     generate_fuel_rod_bundle,
+    initialize_reactor_components,
+    draw_cells,
+    draw_cells_cellwise,
+    step_neutrons,
+    generate_control_rods,
 )
 from reactorAux import (
     initialize_controls,
@@ -25,34 +30,22 @@ class Reactor:
         self.root = root
         root.bind("<Key>", self.handle_keypress)
         self.plot_frame = tk.Frame(root)
-        # self.canvas = tk.Canvas(root)
-        # width=N_X * CELL_SIZE * GUI_SCALE,
-        # height=N_Y * CELL_SIZE * GUI_SCALE,
-        # self.cells = generate_single_fuel_rod(N_X, N_Y, CELL_SIZE)
-        self.cells = generate_fuel_rod_bundle(8, 9, 12, CELL_SIZE)
+
+        # create the cells, neutrons, and reactor stats/parameters. Required for width and height of canvas
+        initialize_reactor_components(self)
+
         self.reactor_size = np.sqrt(len(self.cells)) * CELL_SIZE
-        self.step_number = 0
         self.canvas = tk.Canvas(
             root,
             width=self.reactor_size * GUI_SCALE,
             height=self.reactor_size * GUI_SCALE,
         )
-        self.neutrons = []
-        self.neutron_count = len(self.neutrons)
-        self.average_neutron_energy = calculate_average_energy(self.neutrons)
-        self.time_elapsed = 0
-        self.enrichment = DEFAULT_FUEL_ENRICHMENT / 100
-        # Position of source in cm
-        self.neutron_source = NeutronSource(
-            0.2 * N_X * CELL_SIZE, 0.2 * N_Y * CELL_SIZE, 1, 1
-        )
-        self.is_running = False
 
         initialize_controls(self, root)
         initialize_graphs(self)
         self.update_graphs_loop()
         pack_widgets(self)
-        self.initial_draw()
+        draw_cells(self)
 
         self.draw_reactor()
         self.update_reactor()
@@ -62,22 +55,16 @@ class Reactor:
         update_graphs(self)
         self.root.after(100, self.update_graphs_loop)
 
-    def initial_draw(self):
-        self.canvas.delete("all")
-        for cell in self.cells:
-            cell.draw(self.canvas)
-
     def draw_reactor(self):
         self.canvas.delete("neutron")
-        self.canvas.delete("source")
         for neutron in self.neutrons:
             neutron.draw(self.canvas)
-        self.neutron_source.draw(self.canvas)
         self.root.update()
 
     def step_reactor(self):
         self.fuel_mac_abs_cs, self.fuel_alpha = calculate_fuel_params(self.enrichment)
-        self.neutrons = self.step_neutrons(
+        self.neutrons = step_neutrons(
+            self,
             self.neutrons,
             self.cells,
             self.time_step,
@@ -95,40 +82,6 @@ class Reactor:
         while self.is_running:
             self.step_reactor()
             self.draw_reactor()
-
-    def step_neutrons(self, neutrons, cells, time_step, fuel_cs, fuel_alpha):
-        # Steps all neutrons forward. Tracks which neutrons undergo fission and absorption, handles the adding of new prompt neutrons and removal of the fissioned and absorbed neutrons
-        fissions = []
-        # Track neutrons that fission or are absorbed
-        neutrons_to_remove = []
-        for i in range(len(neutrons)):
-            neutron = neutrons[i]
-            neutron.step(cells, time_step, fuel_cs, fuel_alpha, self.reactor_size)
-            if neutron.fission:
-                x_loc = neutron.x_pos
-                y_loc = neutron.y_pos
-                fissions.append([x_loc, y_loc])
-            if neutron.absorb or neutron.fission:
-                neutrons_to_remove.append(i)
-        for fission in fissions:
-            if (NEUTRONS_PER_FISSION % 1) > np.random.random():
-                neutrons_to_add = np.ceil(NEUTRONS_PER_FISSION)
-            else:
-                neutrons_to_add = np.floor(NEUTRONS_PER_FISSION)
-            for i in range(int(neutrons_to_add)):
-                neutrons.append(
-                    Neutron(
-                        x_pos=fission[0],
-                        y_pos=fission[1],
-                        energy=10,
-                        theta=np.random.random() * 2 * np.pi,
-                    )
-                )
-        for i in reversed(neutrons_to_remove):
-            if not i >= len(neutrons):
-                neutrons.pop(i)
-
-        return neutrons
 
     def change_enrichment(self):
         self.enrichment = (
@@ -153,6 +106,9 @@ class Reactor:
         self.neutrons = []
         self.time_data, self.neutron_count_data, self.neutron_energy_data = [], [], []
         self.time_elapsed = 0
+        self.cells = generate_fuel_rod_bundle(
+            N_FUEL_RODS, FUEL_ROD_SIZE, FUEL_ROD_PITCH, CELL_SIZE
+        )
         self.step_reactor()
         self.draw_reactor()
 
@@ -173,7 +129,25 @@ class Reactor:
                 root.destroy()
 
     def toggle_controlrod(self):
-        print("toggled!")
+        if self.control_rods_inserted:
+            self.control_rods_inserted = False
+            self.cells = generate_fuel_rod_bundle(
+                N_FUEL_RODS, FUEL_ROD_SIZE, FUEL_ROD_PITCH, CELL_SIZE
+            )
+            draw_cells(self)
+            self.draw_reactor()
+        elif not self.control_rods_inserted:
+            self.control_rods_inserted = True
+            self.cells = generate_control_rods(
+                N_FUEL_RODS,
+                FUEL_ROD_SIZE,
+                FUEL_ROD_PITCH,
+                CELL_SIZE,
+                [[0, 0]],
+                self.cells,
+            )
+            draw_cells_cellwise(self)
+            self.draw_reactor()
 
 
 if __name__ == "__main__":

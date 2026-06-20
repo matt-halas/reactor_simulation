@@ -8,6 +8,11 @@ GUI_SCALE = 4000
 # Increase cross section (probability of collision) to speed up simulation
 CROSS_SECTION_AMP = 1
 
+# https://ocw.mit.edu/courses/22-06-engineering-of-nuclear-systems-fall-2010/121722cb9a63f6816e0117b239ffb13a_MIT22_06F10_lec06a.pdf
+N_FUEL_RODS = 8
+FUEL_ROD_SIZE = 9
+FUEL_ROD_PITCH = 13
+
 # Cross section data taken from https://wwwndc.jaea.go.jp/j5fig/findex.html
 
 ### Moderator constants ###
