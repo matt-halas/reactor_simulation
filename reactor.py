@@ -8,7 +8,6 @@ from functions import (
     generate_fuel_rod_bundle,
     initialize_reactor_components,
     draw_cells,
-    draw_cells_cellwise,
     step_neutrons,
     generate_control_rods,
 )
@@ -143,10 +142,10 @@ class Reactor:
                 FUEL_ROD_SIZE,
                 FUEL_ROD_PITCH,
                 CELL_SIZE,
-                [[0, 0]],
+                self.control_rod_locations,
                 self.cells,
             )
-            draw_cells_cellwise(self)
+            draw_cells(self)
             self.draw_reactor()
 
 

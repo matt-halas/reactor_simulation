@@ -59,6 +59,9 @@ class Neutron:
             if collision_probability > np.random.random():
                 self.fuel_collision(fuel_alpha)
 
+        elif self.medium == "ControlRod":
+            self.control_rod_collision()
+
     def moderator_collision(self):
         # phi is collision angle
         phi = np.random.random() * 2 * np.pi
@@ -86,8 +89,11 @@ class Neutron:
             else:
                 self.absorb = True
 
+    def control_rod_collision(self):
+        self.absorb = True
+
     def find_medium(self, cells):
-        cell_idx = int(self.x_pos // CELL_SIZE * 10 + self.y_pos // CELL_SIZE)
+        cell_idx = int(self.x_pos // CELL_SIZE * 108 + self.y_pos // CELL_SIZE)
         self.medium = cells[cell_idx].cell_type
 
     def draw(self, canvas):

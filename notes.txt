@@ -1,0 +1,6 @@
+https://www.nrc.gov/docs/ML1125/ML11258A302.pdf
+This link contains information about typical control rods used in reactors. Pretend that these are B4C powder filled rods. 76.5%w boron, enriched to 18% B^10
+http://large.stanford.edu/courses/2011/ph241/grayson1/
+Microscopic cross section of B10 is 3835 barns (3.835E-21cm^2)
+N based on density of 2.50 g/cm^2, M=55.255 g/mol, wt%Boron = 76.5%, B10Enriched% = 18%
+Mac cs = 14.36 cm^-1

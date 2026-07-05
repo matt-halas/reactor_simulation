@@ -14,7 +14,7 @@ class Cell:
         elif cell_type == "Moderator":
             self.color = "blue"
         elif cell_type == "ControlRod":
-            self.color = "cyan"
+            self.color = "grey"
 
     def draw(self, canvas):
         x0, y0, x1, y1 = (

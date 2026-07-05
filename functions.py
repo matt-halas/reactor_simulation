@@ -59,6 +59,13 @@ def draw_cells(reactor):
     rod_spacing = FUEL_ROD_PITCH - FUEL_ROD_SIZE
     for i in range(N_FUEL_RODS):
         for j in range(N_FUEL_RODS):
+            if [
+                i,
+                j,
+            ] in reactor.control_rod_locations and reactor.control_rods_inserted:
+                color = "grey"
+            else:
+                color = "yellow"
             reactor.canvas.create_rectangle(
                 (rod_spacing + (i * FUEL_ROD_PITCH)) * GUI_SCALE * CELL_SIZE,
                 (rod_spacing + (j * FUEL_ROD_PITCH)) * GUI_SCALE * CELL_SIZE,
@@ -68,15 +75,9 @@ def draw_cells(reactor):
                 (rod_spacing + FUEL_ROD_SIZE + (j * FUEL_ROD_PITCH))
                 * GUI_SCALE
                 * CELL_SIZE,
-                fill="yellow",
+                fill=color,
                 outline="",
             )
-
-
-def draw_cells_cellwise(reactor):
-    reactor.canvas.delete("all")
-    for cell in reactor.cells:
-        cell.draw(reactor.canvas)
 
 
 def initialize_reactor_components(reactor):
@@ -95,6 +96,12 @@ def initialize_reactor_components(reactor):
     )
     reactor.is_running = False
     reactor.control_rods_inserted = False
+    reactor.control_rod_locations = [
+        [1, 1],
+        [1, N_FUEL_RODS - 2],
+        [N_FUEL_RODS - 2, 1],
+        [N_FUEL_RODS - 2, N_FUEL_RODS - 2],
+    ]
 
 
 def generate_single_fuel_rod(N_X, N_Y, CELL_SIZE):
