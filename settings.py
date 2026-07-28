@@ -21,6 +21,9 @@ CROSS_SECTION = CROSS_SECTION_AMP * 0.1
 MOD_MAC_SCT_CS = 3.443
 MOD_MAC_ABS_CS = 0.0222
 
+# Control rod macroscopic cross section in cm^-1
+CR_MAC_ABS_CS = 14.36
+
 # RMS speed of hydrogen atoms in water. Will transfer some energy to neutrons.
 MODERATOR_RMS = 2000
 

@@ -1,5 +1,6 @@
-from settings import *
 import numpy as np
+
+from settings import *
 
 
 class Neutron:
@@ -41,8 +42,9 @@ class Neutron:
         self.find_medium(cells)
         # If the medium is moderator, determine the likelihood of a collision in a path that the neutron is travelling
         # Determine the step path length in cm (m/s*100*dt)
-        step_path_length = np.sqrt((self.x_vel**2 + self.y_vel**2)) * 100 * time_step
+        step_path_length = np.sqrt(self.x_vel**2 + self.y_vel**2) * 100 * time_step
         if self.medium == "Moderator":
+            self.moderator_collision()
             # Probability formula on page 59 - neutron makes it to x WITHOUT a collision
             scatter_probability = 1 - np.exp(-MOD_MAC_SCT_CS * step_path_length)
             if scatter_probability > np.random.random():
@@ -60,9 +62,12 @@ class Neutron:
                 self.fuel_collision(fuel_alpha)
 
         elif self.medium == "ControlRod":
-            self.control_rod_collision()
+            collision_probability = 1 - np.exp(-CR_MAC_ABS_CS * step_path_length)
+            if collision_probability > np.random.random():
+                self.absorb = True
 
     def moderator_collision(self):
+        # Calculates the outcome of a scattering neutron collision
         # phi is collision angle
         phi = np.random.random() * 2 * np.pi
         theta = np.atan2(self.y_vel, self.x_vel)
@@ -88,9 +93,6 @@ class Neutron:
                 self.fission = True
             else:
                 self.absorb = True
-
-    def control_rod_collision(self):
-        self.absorb = True
 
     def find_medium(self, cells):
         cell_idx = int(self.x_pos // CELL_SIZE * 108 + self.y_pos // CELL_SIZE)
