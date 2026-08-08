@@ -1,13 +1,19 @@
-from cell import Cell
-from neutronsource import NeutronSource
-from neutron import Neutron
-
-from settings import GUI_SCALE
-from settings import CELL_SIZE, N_X, N_Y
-from settings import N_FUEL_RODS, FUEL_ROD_SIZE, FUEL_ROD_PITCH, DEFAULT_FUEL_ENRICHMENT
-from settings import NEUTRONS_PER_FISSION
-
 import numpy as np
+
+from cell import Cell
+from neutron import Neutron
+from neutronsource import NeutronSource
+from settings import (
+    CELL_SIZE,
+    DEFAULT_FUEL_ENRICHMENT,
+    FUEL_ROD_PITCH,
+    FUEL_ROD_SIZE,
+    GUI_SCALE,
+    N_FUEL_RODS,
+    N_X,
+    N_Y,
+    NEUTRONS_PER_FISSION,
+)
 
 
 def step_neutrons(reactor, neutrons, cells, time_step, fuel_cs, fuel_alpha):
@@ -96,12 +102,10 @@ def initialize_reactor_components(reactor):
     )
     reactor.is_running = False
     reactor.control_rods_inserted = False
-    reactor.control_rod_locations = [
-        [1, 1],
-        [1, N_FUEL_RODS - 2],
-        [N_FUEL_RODS - 2, 1],
-        [N_FUEL_RODS - 2, N_FUEL_RODS - 2],
-    ]
+    reactor.control_rod_locations = []
+    for i in range(0, N_FUEL_RODS, 2):
+        for j in range(0, N_FUEL_RODS, 2):
+            reactor.control_rod_locations.append([i, j])
 
 
 def generate_single_fuel_rod(N_X, N_Y, CELL_SIZE):

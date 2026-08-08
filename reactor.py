@@ -1,26 +1,25 @@
 import tkinter as tk
+
 import numpy as np
 
 from functions import (
     # generate_single_fuel_rod,
     calculate_average_energy,
     calculate_fuel_params,
+    draw_cells,
+    generate_control_rods,
     generate_fuel_rod_bundle,
     initialize_reactor_components,
-    draw_cells,
     step_neutrons,
-    generate_control_rods,
 )
+from neutron import Neutron
+from neutronsource import NeutronSource
 from reactorAux import (
     initialize_controls,
     initialize_graphs,
-    update_graphs,
     pack_widgets,
+    update_graphs,
 )
-
-from neutronsource import NeutronSource
-from neutron import Neutron
-
 from settings import *
 
 
@@ -121,11 +120,9 @@ class Reactor:
         self.neutron_source.emit(self.neutrons)
 
     def handle_keypress(self, event):
-        if event.keysym:
-            # Close the window if the esc key is pressed
-            if event.keysym == "Escape":
-                self.reset_reactor()
-                root.destroy()
+        if event.keysym and event.keysym == "Escape":
+            self.reset_reactor()
+            root.destroy()
 
     def toggle_controlrod(self):
         if self.control_rods_inserted:
